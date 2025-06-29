@@ -43,6 +43,15 @@ export const systemLogs = pgTable("system_logs", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+export const broadcastMessages = pgTable("broadcast_messages", {
+  id: serial("id").primaryKey(),
+  message: text("message").notNull(),
+  senderNode: text("sender_node").notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
+  delivered: boolean("delivered").default(false),
+  recipients: jsonb("recipients").default([]),
+});
+
 export const insertNodeSchema = createInsertSchema(nodes).omit({
   id: true,
   lastSeen: true,
@@ -64,12 +73,20 @@ export const insertSystemLogSchema = createInsertSchema(systemLogs).omit({
   timestamp: true,
 });
 
+export const insertBroadcastMessageSchema = createInsertSchema(broadcastMessages).omit({
+  id: true,
+  timestamp: true,
+  delivered: true,
+});
+
 export type Node = typeof nodes.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type SystemMetrics = typeof systemMetrics.$inferSelect;
 export type SystemLog = typeof systemLogs.$inferSelect;
+export type BroadcastMessage = typeof broadcastMessages.$inferSelect;
 
 export type InsertNode = z.infer<typeof insertNodeSchema>;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type InsertSystemMetrics = z.infer<typeof insertSystemMetricsSchema>;
 export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
+export type InsertBroadcastMessage = z.infer<typeof insertBroadcastMessageSchema>;

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
-import { insertNodeSchema, insertTaskSchema, insertSystemLogSchema } from "@shared/schema";
+import { insertNodeSchema, insertTaskSchema, insertSystemLogSchema, insertBroadcastMessageSchema } from "@shared/schema";
 import { OffloadSystem } from "./services/offload-system";
 import { SystemMonitor } from "./utils/system-monitor";
 
@@ -249,6 +249,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const metrics = systemMonitor.getCurrentMetrics();
       res.json(metrics);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Broadcast messages endpoints
+  app.post('/api/broadcast', async (req, res) => {
+    try {
+      const validatedMessage = insertBroadcastMessageSchema.parse(req.body);
+      const message = await storage.createBroadcastMessage(validatedMessage);
+      
+      // Send broadcast via WebSocket to all connected clients
+      const connectedNodes = await storage.getAllNodes();
+      const activeConnections = Array.from(wss.clients).filter(ws => ws.readyState === 1);
+      
+      const broadcastData = {
+        type: 'broadcast_message',
+        data: {
+          id: message.id,
+          message: message.message,
+          senderNode: message.senderNode,
+          timestamp: message.timestamp,
+          recipients: connectedNodes.filter(node => node.status === 'online').map(node => node.name)
+        }
+      };
+
+      activeConnections.forEach(ws => {
+        ws.send(JSON.stringify(broadcastData));
+      });
+
+      // Update message as delivered
+      await storage.updateBroadcastMessage(message.id, { 
+        delivered: true, 
+        recipients: broadcastData.data.recipients 
+      });
+
+      res.status(201).json(message);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/broadcast', async (req, res) => {
+    try {
+      const messages = await storage.getAllBroadcastMessages();
+      res.json(messages);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

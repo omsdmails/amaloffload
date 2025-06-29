@@ -4,7 +4,8 @@ import {
   BarChart3, 
   Shield, 
   Settings, 
-  Network 
+  Network,
+  Radio
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -13,6 +14,7 @@ export function Sidebar() {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: Activity, count: null },
+    { href: "/broadcast", label: "الرسائل الجماعية", icon: Radio, count: null },
     { href: "/nodes", label: "Nodes", icon: Server, count: "4" },
     { href: "/tasks", label: "Tasks", icon: BarChart3, count: "12" },
     { href: "/analytics", label: "Analytics", icon: BarChart3, count: null },

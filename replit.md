@@ -95,6 +95,13 @@ The Distributed Task System (DTS) is a full-stack web application that manages d
 
 ## Changelog
 - June 29, 2025. Initial setup
+- June 29, 2025. Added broadcast messaging capability to send messages to all connected devices from the index page
+  - Created broadcast_messages table in PostgreSQL database
+  - Implemented API endpoints for sending and retrieving broadcast messages  
+  - Added real-time WebSocket broadcasting to all connected clients
+  - Created bilingual UI components with Arabic interface
+  - Added navigation link in sidebar for easy access
+  - Integrated with existing authentication and security systems
 
 ## User Preferences
 

@@ -3,14 +3,17 @@ import {
   tasks, 
   systemMetrics, 
   systemLogs,
+  broadcastMessages,
   type Node, 
   type Task, 
   type SystemMetrics, 
   type SystemLog,
+  type BroadcastMessage,
   type InsertNode, 
   type InsertTask, 
   type InsertSystemMetrics, 
-  type InsertSystemLog 
+  type InsertSystemLog,
+  type InsertBroadcastMessage
 } from "@shared/schema";
 
 export interface IStorage {
@@ -35,6 +38,11 @@ export interface IStorage {
   // System Logs
   createSystemLog(log: InsertSystemLog): Promise<SystemLog>;
   getRecentLogs(limit?: number): Promise<SystemLog[]>;
+  
+  // Broadcast Messages
+  createBroadcastMessage(message: InsertBroadcastMessage): Promise<BroadcastMessage>;
+  getAllBroadcastMessages(): Promise<BroadcastMessage[]>;
+  updateBroadcastMessage(id: number, updates: Partial<BroadcastMessage>): Promise<BroadcastMessage | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -312,6 +320,30 @@ export class DatabaseStorage implements IStorage {
       .from(systemLogs)
       .orderBy(systemLogs.timestamp)
       .limit(limit);
+  }
+
+  async createBroadcastMessage(message: InsertBroadcastMessage): Promise<BroadcastMessage> {
+    const [newMessage] = await db
+      .insert(broadcastMessages)
+      .values(message)
+      .returning();
+    return newMessage;
+  }
+
+  async getAllBroadcastMessages(): Promise<BroadcastMessage[]> {
+    return await db
+      .select()
+      .from(broadcastMessages)
+      .orderBy(broadcastMessages.timestamp);
+  }
+
+  async updateBroadcastMessage(id: number, updates: Partial<BroadcastMessage>): Promise<BroadcastMessage | undefined> {
+    const [updatedMessage] = await db
+      .update(broadcastMessages)
+      .set(updates)
+      .where(eq(broadcastMessages.id, id))
+      .returning();
+    return updatedMessage || undefined;
   }
 }
 
