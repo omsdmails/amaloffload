@@ -7,6 +7,7 @@ import { NodesTable } from "@/components/dashboard/nodes-table";
 import { TaskActivity } from "@/components/dashboard/task-activity";
 import { SecurityPanel } from "@/components/dashboard/security-panel";
 import { SystemLogs } from "@/components/dashboard/system-logs";
+import { TaskExecutor } from "@/components/dashboard/task-executor";
 
 export default function Dashboard() {
   const { data: systemData, isLoading } = useSystemData();
@@ -33,9 +34,10 @@ export default function Dashboard() {
         <main className="flex-1 overflow-auto p-6">
           <MetricsGrid metrics={systemData?.stats} />
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <NodesTable nodes={systemData?.nodes || []} />
-            <TaskActivity tasks={systemData?.tasks || []} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+            <TaskExecutor className="lg:col-span-1 xl:col-span-1" />
+            <NodesTable nodes={systemData?.nodes || []} className="lg:col-span-1 xl:col-span-2" />
+            <TaskActivity tasks={systemData?.tasks || []} className="lg:col-span-2 xl:col-span-3" />
           </div>
           
           <SecurityPanel />

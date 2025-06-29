@@ -5,9 +5,10 @@ import type { Task } from "@shared/schema";
 
 interface TaskActivityProps {
   tasks: Task[];
+  className?: string;
 }
 
-export function TaskActivity({ tasks }: TaskActivityProps) {
+export function TaskActivity({ tasks, className }: TaskActivityProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -74,7 +75,7 @@ export function TaskActivity({ tasks }: TaskActivityProps) {
   };
 
   return (
-    <Card className="bg-gray-800 border-gray-700">
+    <Card className={`bg-gray-800 border-gray-700 ${className || ''}`}>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Recent Tasks</CardTitle>
       </CardHeader>

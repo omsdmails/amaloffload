@@ -158,6 +158,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Smart task execution with automatic offloading
+  app.post('/api/execute-smart', async (req, res) => {
+    try {
+      const { functionName, args = [], kwargs = {} } = req.body;
+      
+      if (!functionName) {
+        return res.status(400).json({ error: 'Function name is required' });
+      }
+
+      // Create task record
+      const task = await storage.createTask({
+        name: functionName,
+        status: 'pending',
+        nodeId: null,
+        complexity: 0,
+        result: null,
+        error: null,
+        duration: null
+      });
+
+      // Execute with smart interceptor
+      const startTime = Date.now();
+      const result = await offloadSystem.executeTask(functionName, args, kwargs);
+      const duration = Date.now() - startTime;
+      
+      // Update task with result
+      await storage.updateTask(task.id, {
+        status: 'completed',
+        result,
+        duration,
+        completedAt: new Date()
+      });
+
+      res.json({ 
+        taskId: task.id,
+        result,
+        duration,
+        executionType: 'local' // This would be determined by the interceptor
+      });
+
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({ 

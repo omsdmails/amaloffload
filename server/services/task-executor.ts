@@ -1,7 +1,11 @@
+import { TaskInterceptor } from './task-interceptor';
+
 export class TaskExecutor {
   private tasks: Map<string, Function> = new Map();
+  private taskInterceptor: TaskInterceptor;
 
   constructor() {
+    this.taskInterceptor = new TaskInterceptor();
     this.registerBuiltInTasks();
   }
 
@@ -85,6 +89,22 @@ export class TaskExecutor {
       return await task(...args, kwargs);
     } catch (error) {
       console.error(`Error executing task ${functionName}:`, error);
+      throw error;
+    }
+  }
+
+  async executeWithInterceptor(functionName: string, args: any[] = [], kwargs: any = {}): Promise<any> {
+    const task = this.tasks.get(functionName);
+    if (!task) {
+      throw new Error(`Unknown task: ${functionName}`);
+    }
+
+    try {
+      // Use the task interceptor to automatically decide on offloading
+      const interceptedTask = this.taskInterceptor.offloadIfNeeded(task);
+      return await interceptedTask(...args, kwargs);
+    } catch (error) {
+      console.error(`Error executing intercepted task ${functionName}:`, error);
       throw error;
     }
   }

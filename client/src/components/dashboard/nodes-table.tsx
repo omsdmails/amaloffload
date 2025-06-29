@@ -5,9 +5,10 @@ import type { Node } from "@shared/schema";
 
 interface NodesTableProps {
   nodes: Node[];
+  className?: string;
 }
 
-export function NodesTable({ nodes }: NodesTableProps) {
+export function NodesTable({ nodes, className }: NodesTableProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online':
@@ -28,7 +29,7 @@ export function NodesTable({ nodes }: NodesTableProps) {
   };
 
   return (
-    <Card className="bg-gray-800 border-gray-700">
+    <Card className={`bg-gray-800 border-gray-700 ${className || ''}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
         <CardTitle className="text-lg font-semibold">Connected Nodes</CardTitle>
         <Button variant="link" className="text-blue-400 hover:text-blue-300 p-0">
