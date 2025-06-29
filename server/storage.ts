@@ -215,4 +215,104 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+
+export class DatabaseStorage implements IStorage {
+  async getNode(id: number): Promise<Node | undefined> {
+    const [node] = await db.select().from(nodes).where(eq(nodes.id, id));
+    return node || undefined;
+  }
+
+  async getAllNodes(): Promise<Node[]> {
+    return await db.select().from(nodes);
+  }
+
+  async createNode(node: InsertNode): Promise<Node> {
+    const [newNode] = await db
+      .insert(nodes)
+      .values(node)
+      .returning();
+    return newNode;
+  }
+
+  async updateNode(id: number, updates: Partial<Node>): Promise<Node | undefined> {
+    const [updatedNode] = await db
+      .update(nodes)
+      .set(updates)
+      .where(eq(nodes.id, id))
+      .returning();
+    return updatedNode || undefined;
+  }
+
+  async deleteNode(id: number): Promise<boolean> {
+    const result = await db.delete(nodes).where(eq(nodes.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getTask(id: number): Promise<Task | undefined> {
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task || undefined;
+  }
+
+  async getAllTasks(): Promise<Task[]> {
+    return await db.select().from(tasks);
+  }
+
+  async getTasksByStatus(status: string): Promise<Task[]> {
+    return await db.select().from(tasks).where(eq(tasks.status, status));
+  }
+
+  async createTask(task: InsertTask): Promise<Task> {
+    const [newTask] = await db
+      .insert(tasks)
+      .values(task)
+      .returning();
+    return newTask;
+  }
+
+  async updateTask(id: number, updates: Partial<Task>): Promise<Task | undefined> {
+    const [updatedTask] = await db
+      .update(tasks)
+      .set(updates)
+      .where(eq(tasks.id, id))
+      .returning();
+    return updatedTask || undefined;
+  }
+
+  async createSystemMetrics(metrics: InsertSystemMetrics): Promise<SystemMetrics> {
+    const [newMetrics] = await db
+      .insert(systemMetrics)
+      .values(metrics)
+      .returning();
+    return newMetrics;
+  }
+
+  async getLatestMetrics(nodeId?: number): Promise<SystemMetrics[]> {
+    let query = db.select().from(systemMetrics);
+    
+    if (nodeId) {
+      query = query.where(eq(systemMetrics.nodeId, nodeId));
+    }
+    
+    return await query.orderBy(systemMetrics.timestamp).limit(50);
+  }
+
+  async createSystemLog(log: InsertSystemLog): Promise<SystemLog> {
+    const [newLog] = await db
+      .insert(systemLogs)
+      .values(log)
+      .returning();
+    return newLog;
+  }
+
+  async getRecentLogs(limit = 50): Promise<SystemLog[]> {
+    return await db
+      .select()
+      .from(systemLogs)
+      .orderBy(systemLogs.timestamp)
+      .limit(limit);
+  }
+}
+
+export const storage = new DatabaseStorage();
