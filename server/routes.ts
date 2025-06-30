@@ -9,7 +9,7 @@ import { SystemMonitor } from "./utils/system-monitor";
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ 
-    server: httpServer,
+    port: 8347,
     path: '/api/ws' // Use specific path to avoid Vite HMR conflicts
   });
 

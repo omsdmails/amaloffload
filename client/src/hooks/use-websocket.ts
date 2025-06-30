@@ -8,33 +8,34 @@ export function useWebSocket() {
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/ws`;
-    
+    const hostname = window.location.hostname;
+    const wsUrl = `${protocol}//${hostname}:8347/api/ws`;
+
     const connect = () => {
       wsRef.current = new WebSocket(wsUrl);
-      
+
       wsRef.current.onopen = () => {
         console.log('WebSocket connected');
         setIsConnected(true);
       };
-      
+
       wsRef.current.onclose = () => {
         console.log('WebSocket disconnected');
         setIsConnected(false);
-        
+
         // Attempt to reconnect after 3 seconds
         setTimeout(connect, 3000);
       };
-      
+
       wsRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
         setIsConnected(false);
       };
-      
+
       wsRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
+
           // Handle different message types
           switch (data.type) {
             case 'initial_data':
@@ -64,9 +65,9 @@ export function useWebSocket() {
         }
       };
     };
-    
+
     connect();
-    
+
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
