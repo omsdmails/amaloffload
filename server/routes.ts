@@ -340,5 +340,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/ai', aiRoutes);
   app.use('/api/enhanced-ai', enhancedAiRoutes);
 
+  // Execute distributed task
+  app.post('/api/execute-task', async (req, res) => {
+    try {
+      const { taskType, params } = req.body;
+
+      // قائمة المهام المدعومة
+      const supportedTasks = [
+        'matrix_multiply', 'prime_calculation', 'data_processing',
+        'video_format_conversion', 'video_effects_processing', 'render_3d_scene',
+        'physics_simulation', 'game_ai_processing',
+        // مهام البث المباشر الجديدة
+        'process_game_stream', 'real_time_video_enhancement', 
+        'multi_stream_processing', 'ai_commentary_generation', 
+        'stream_quality_optimization'
+      ];
+
+      if (!supportedTasks.includes(taskType)) {
+        return res.status(400).json({ error: 'Unsupported task type' });
+      }
+
+      // محاكاة تنفيذ المهمة
+      const result = await simulateTaskExecution(taskType, params);
+
+      res.json(result);
+    } catch (error) {
+      console.error('Task execution error:', error);
+      res.status(500).json({ error: 'Failed to execute task' });
+    }
+  });
+
+  // دالة محاكاة تنفيذ المهام
+  async function simulateTaskExecution(taskType: string, params: any) {
+    const startTime = Date.now();
+
+    // محاكاة وقت المعالجة
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+
+    const processingTime = (Date.now() - startTime) / 1000;
+
+    // نتائج محاكاة حسب نوع المهمة
+    switch (taskType) {
+      case 'process_game_stream':
+        return {
+          status: 'success',
+          stream_type: 'game',
+          fps_processed: params.fps || 60,
+          resolution: params.resolution || '1920x1080',
+          frames_processed: params.stream_data?.length || 60,
+          enhancements_applied: params.enhancements || ['noise_reduction'],
+          quality_score: Math.round(60 + Math.random() * 30),
+          latency_ms: Math.round(50 + Math.random() * 100),
+          processing_time: processingTime,
+          bandwidth_optimized: true
+        };
+
+      case 'real_time_video_enhancement':
+        return {
+          status: 'success',
+          video_quality: params.video_quality || '1080p',
+          target_fps: params.target_fps || 60,
+          enhancements: params.enhancement_types?.reduce((acc: any, type: string) => {
+            acc[type] = {
+              improvement: Math.round(15 + Math.random() * 20),
+              processing_cost: Math.round(processingTime / params.enhancement_types.length * 1000) / 1000
+            };
+            return acc;
+          }, {}),
+          processing_time: processingTime,
+          real_time_capable: processingTime < 0.016
+        };
+
+      case 'multi_stream_processing':
+        return {
+          status: 'success',
+          streams_processed: params.streams_data?.length || 3,
+          processing_mode: params.processing_mode || 'parallel',
+          results: params.streams_data?.reduce((acc: any, stream: any, i: number) => {
+            acc[`stream_${i+1}`] = {
+              status: 'processed',
+              quality: stream.quality,
+              fps: stream.fps,
+              enhancement_applied: true,
+              processing_node: `node_${(i % 3) + 1}`
+            };
+            return acc;
+          }, {}) || {},
+          processing_time: processingTime,
+          nodes_utilized: Math.min(params.streams_data?.length || 3, 3)
+        };
+
+      case 'ai_commentary_generation':
+        return {
+          status: 'success',
+          language: params.language || 'ar',
+          commentary_length: Math.min(params.commentary_length || 50, 10),
+          generated_text: [
+            'حركة رائعة من اللاعب!',
+            'هذا هدف مذهل!',
+            'دفاع قوي في هذه اللحظة'
+          ],
+          game_events_analyzed: params.game_events?.length || 5,
+          processing_time: processingTime,
+          emotion_detection: 'excited',
+          context_awareness: true
+        };
+
+      case 'stream_quality_optimization':
+        const optimalQuality = Math.min(params.target_bandwidth * 200, 1080);
+        return {
+          status: 'success',
+          original_quality: params.stream_metadata?.quality || '1080p',
+          optimized_quality: `${Math.round(optimalQuality)}p`,
+          optimal_fps: optimalQuality >= 1080 ? 60 : optimalQuality >= 720 ? 45 : 30,
+          target_bandwidth: params.target_bandwidth,
+          viewer_count: params.viewer_count,
+          bandwidth_saved: Math.round(Math.max(0, (1080 - optimalQuality) / 1080 * 100)),
+          processing_time: processingTime,
+          adaptive_streaming: true
+        };
+
+      default:
+        return {
+          status: 'success',
+          processing_time: processingTime,
+          result: `Task ${taskType} completed successfully`
+        };
+    }
+  }
+
   return httpServer;
 }

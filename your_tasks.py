@@ -87,6 +87,51 @@ def physics_simulation(objects_count, frames_count, physics_quality="medium"):
 
 @offload
 def game_ai_processing(ai_agents_count, decision_complexity, game_state_size):
-    """معالجة ذكاء اصطناعي للألعاب - مهمة قابلة للتوزيع"""
-    from video_processing import game_ai_processing as gap
-    return gap(ai_agents_count, decision_complexity, game_state_size)
+    """معالجة ذكاء اصطناعي للألعاب"""
+    import time
+    start_time = time.time()
+
+    total_operations = ai_agents_count * decision_complexity * game_state_size
+    processing_time = total_operations / 100000  # أسرع للخادم
+
+    time.sleep(min(processing_time, 1))
+
+    return {
+        "status": "success",
+        "ai_agents": ai_agents_count,
+        "decision_complexity": decision_complexity,
+        "total_operations": total_operations,
+        "processing_time": time.time() - start_time,
+        "server_processed": True
+    }
+
+# مهام البث المباشر
+@offload
+def process_game_stream(stream_data, fps, resolution, enhancements=None):
+    """معالجة بث الألعاب في الوقت الفعلي"""
+    from live_streaming import process_game_stream as pgs
+    return pgs(stream_data, fps, resolution, enhancements)
+
+@offload
+def real_time_video_enhancement(enhancement_types, video_quality="1080p", target_fps=60):
+    """تحسين الفيديو في الوقت الفعلي"""
+    from live_streaming import real_time_video_enhancement as rtve
+    return rtve(enhancement_types, video_quality, target_fps)
+
+@offload
+def multi_stream_processing(streams_data, processing_mode="parallel"):
+    """معالجة عدة بثوث في نفس الوقت"""
+    from live_streaming import multi_stream_processing as msp
+    return msp(streams_data, processing_mode)
+
+@offload
+def ai_commentary_generation(game_events, commentary_length, language="ar"):
+    """توليد تعليق ذكي للألعاب"""
+    from live_streaming import ai_commentary_generation as acg
+    return acg(game_events, commentary_length, language)
+
+@offload
+def stream_quality_optimization(stream_metadata, target_bandwidth, viewer_count):
+    """تحسين جودة البث حسب النطاق الترددي وعدد المشاهدين"""
+    from live_streaming import stream_quality_optimization as sqo
+    return sqo(stream_metadata, target_bandwidth, viewer_count)

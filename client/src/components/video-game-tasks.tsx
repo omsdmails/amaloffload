@@ -1,4 +1,4 @@
-
+react
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +44,21 @@ export function VideoGameTasks() {
     decisionComplexity: 8,
     gameStateSize: 800
   });
+
+  // إعدادات البث المباشر
+  const [streamSettings, setStreamSettings] = useState({
+    fps: 30,
+    videoQuality: '720p',
+    viewerCount: 100,
+    targetBandwidth: 2.5,
+    enhancements: ['upscaling', 'noise_reduction'],
+    streamsCount: 2,
+    processingMode: 'distributed',
+    commentaryLength: 60,
+    language: 'ar',
+    resolution: '1080p'
+  });
+
 
   const executeTask = async (taskType: string, params: any) => {
     setLoading(true);
@@ -397,16 +412,158 @@ export function VideoGameTasks() {
         </CardContent>
       </Card>
 
-      {/* مهام الألعاب */}
+      {/* البث المباشر للألعاب والفيديو */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gamepad2 className="h-6 w-6" />
-            مهام الألعاب ثلاثية الأبعاد
+            📺 البث المباشر للألعاب والفيديو
           </CardTitle>
           <CardDescription>
-            مهام متقدمة للرندر والمحاكاة والذكاء الاصطناعي
+            معالجة موزعة للبث المباشر مع تحسين الجودة والتعليق الذكي
           </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>FPS البث</Label>
+              <Select value={streamSettings.fps.toString()} onValueChange={(value) => 
+                setStreamSettings(prev => ({ ...prev, fps: parseInt(value) }))
+              }>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30">30 FPS</SelectItem>
+                  <SelectItem value="45">45 FPS</SelectItem>
+                  <SelectItem value="60">60 FPS</SelectItem>
+                  <SelectItem value="120">120 FPS</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>جودة الفيديو</Label>
+              <Select value={streamSettings.videoQuality} onValueChange={(value) => 
+                setStreamSettings(prev => ({ ...prev, videoQuality: value }))
+              }>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="720p">720p HD</SelectItem>
+                  <SelectItem value="1080p">1080p Full HD</SelectItem>
+                  <SelectItem value="1440p">1440p 2K</SelectItem>
+                  <SelectItem value="4K">4K Ultra HD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>عدد المشاهدين</Label>
+              <Input
+                type="number"
+                value={streamSettings.viewerCount}
+                onChange={(e) => setStreamSettings(prev => ({ 
+                  ...prev, 
+                  viewerCount: parseInt(e.target.value) || 0 
+                }))}
+                min="1"
+                max="10000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>النطاق الترددي (Mbps)</Label>
+              <Input
+                type="number"
+                step="0.5"
+                value={streamSettings.targetBandwidth}
+                onChange={(e) => setStreamSettings(prev => ({ 
+                  ...prev, 
+                  targetBandwidth: parseFloat(e.target.value) || 1.0 
+                }))}
+                min="0.5"
+                max="50"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Button
+              onClick={() => executeTask('process_game_stream', {
+                stream_data: Array.from({length: 60}, (_, i) => `frame_${i}`),
+                fps: streamSettings.fps,
+                resolution: streamSettings.resolution,
+                enhancements: streamSettings.enhancements
+              })}
+              disabled={loading}
+              className="w-full"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              معالجة بث الألعاب
+            </Button>
+
+            <Button
+              onClick={() => executeTask('real_time_video_enhancement', {
+                enhancement_types: ['upscaling', 'noise_reduction', 'hdr_enhancement'],
+                video_quality: streamSettings.videoQuality,
+                target_fps: streamSettings.targetFps
+              })}
+              disabled={loading}
+              className="w-full"
+            >
+              📹 تحسين الفيديو المباشر
+            </Button>
+
+            <Button
+              onClick={() => executeTask('multi_stream_processing', {
+                streams_data: Array.from({length: streamSettings.streamsCount}, (_, i) => ({
+                  quality: i === 0 ? '1080p' : i === 1 ? '720p' : '1440p',
+                  fps: 30 + (i * 15),
+                  complexity: 2 + i
+                })),
+                processing_mode: streamSettings.processingMode
+              })}
+              disabled={loading}
+              className="w-full"
+            >
+              📡 معالجة متعددة البثوث
+            </Button>
+
+            <Button
+              onClick={() => executeTask('ai_commentary_generation', {
+                game_events: ['goal', 'save', 'foul', 'corner', 'yellow_card'],
+                commentary_length: streamSettings.commentaryLength,
+                language: streamSettings.language
+              })}
+              disabled={loading}
+              className="w-full"
+            >
+              🤖 تعليق ذكي للألعاب
+            </Button>
+
+            <Button
+              onClick={() => executeTask('stream_quality_optimization', {
+                stream_metadata: { quality: streamSettings.videoQuality },
+                target_bandwidth: streamSettings.targetBandwidth,
+                viewer_count: streamSettings.viewerCount
+              })}
+              disabled={loading}
+              className="w-full col-span-2"
+            >
+              📊 تحسين جودة البث
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* مهام الألعاب ثلاثية الأبعاد */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gamepad2 className="h-5 w-5" />
+            مهام الألعاب ثلاثية الأبعاد
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
