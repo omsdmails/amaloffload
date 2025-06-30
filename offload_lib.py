@@ -16,8 +16,7 @@ logging.basicConfig(
 )
 
 # إعدادات التحميل
-MAX_CPU = 0.6  # عتبة استخدام CPU
-MIN_MEM = 500  # الحد الأدنى للذاكرة (MB)
+MAX_CPU = 0.6  # عتبة استخدام CPU فقط
 
 class PeerListener:
     def __init__(self):
@@ -30,13 +29,43 @@ class PeerListener:
             self.peers.append(f"{ip}:{info.port}")
 
 def discover_peers(timeout=1.5):
-    """اكتشاف الأجهزة المتاحة على الشبكة"""
+    """اكتشاف الأجهزة المتاحة - أولوية LAN ثم WAN"""
+    import socket
+    
+    # أولاً: البحث في الشبكة المحلية (LAN)
     zc = Zeroconf()
     listener = PeerListener()
     ServiceBrowser(zc, "_http._tcp.local.", listener)
     time.sleep(timeout)
     zc.close()
-    return listener.peers
+    
+    lan_peers = []
+    wan_peers = []
+    
+    # تصنيف الأجهزة حسب LAN/WAN
+    for peer in listener.peers:
+        ip = peer.split(':')[0]
+        if is_local_network(ip):
+            lan_peers.append(peer)
+        else:
+            wan_peers.append(peer)
+    
+    # إرجاع LAN أولاً ثم WAN
+    return lan_peers + wan_peers
+
+def is_local_network(ip):
+    """فحص إذا كان IP في الشبكة المحلية"""
+    try:
+        import ipaddress
+        addr = ipaddress.ip_address(ip)
+        return (
+            addr.is_private or
+            str(addr).startswith('192.168.') or
+            str(addr).startswith('10.') or
+            str(addr).startswith('172.')
+        )
+    except:
+        return False
 
 def try_offload(peer, payload, max_retries=3):
     """محاولة إرسال المهمة إلى جهاز آخر"""
@@ -74,8 +103,8 @@ def offload(func):
         
         logging.info(f"حمل النظام - CPU: {cpu:.2f}, الذاكرة: {mem:.1f}MB, تعقيد المهمة: {complexity}")
 
-        # اتخاذ قرار التوزيع
-        if complexity > 50 or cpu > MAX_CPU or mem < MIN_MEM:
+        # اتخاذ قرار التوزيع (معالج فقط)
+        if complexity > 50 or cpu > MAX_CPU:
             try:
                 peers = discover_peers()
                 if peers:

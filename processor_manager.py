@@ -40,7 +40,6 @@ def should_offload(task_complexity=0):
 
     if (
         status['average']['cpu'] > 0.6 or
-        status['average']['mem'] < 500 or
         task_complexity > 75
     ):
         return True

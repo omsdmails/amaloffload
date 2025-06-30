@@ -103,11 +103,31 @@ class DistributedExecutor:
         }
 
         if self.available_peers:
-            peer = min(self.available_peers, key=lambda x: x['load'])
-            logging.info(f"✅ Sending task {task_id} to peer {peer['node_id']}")
+            # ترتيب الأجهزة: LAN أولاً ثم WAN
+            lan_peers = [p for p in self.available_peers if self._is_local_ip(p['ip'])]
+            wan_peers = [p for p in self.available_peers if not self._is_local_ip(p['ip'])]
+            
+            # اختيار من LAN أولاً
+            if lan_peers:
+                peer = min(lan_peers, key=lambda x: x['load'])
+                logging.info(f"✅ Sending task {task_id} to LAN peer {peer['node_id']}")
+            else:
+                # إذا لم تتوفر أجهزة محلية، استخدم WAN
+                peer = min(wan_peers, key=lambda x: x['load'])
+                logging.info(f"✅ Sending task {task_id} to WAN peer {peer['node_id']}")
+            
             self._send_to_peer(peer, task)
         else:
             logging.warning("⚠️ لا توجد أجهزة متاحة - سيتم تنفيذ المهمة محلياً")
+
+    def _is_local_ip(self, ip: str) -> bool:
+        """فحص إذا كان IP في الشبكة المحلية"""
+        return (
+            ip.startswith('192.168.') or 
+            ip.startswith('10.') or 
+            ip.startswith('172.') or
+            ip == '127.0.0.1'
+        )
 
     def _send_to_peer(self, peer: Dict, task: Dict):
         try:
