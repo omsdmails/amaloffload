@@ -201,29 +201,33 @@ export function GroupChat() {
                 className="w-32"
                 required
               />
-              <div className="flex-1 relative">
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="اكتب رسالتك هنا... (اضغط Enter للإرسال)"
-                  rows={1}
-                  className="resize-none pr-12"
-                  required
-                />
-                <Button
-                  type="submit"
-                  disabled={sendBroadcastMutation.isPending || !message.trim()}
-                  size="sm"
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2"
-                >
-                  {sendBroadcastMutation.isPending ? (
-                    <ClockIcon className="h-4 w-4" />
-                  ) : (
-                    <SendIcon className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="اكتب رسالتك هنا... (اضغط Enter للإرسال)"
+                rows={2}
+                className="resize-none flex-1"
+                required
+              />
+              <Button
+                type="submit"
+                disabled={sendBroadcastMutation.isPending || !message.trim()}
+                size="default"
+                className="px-6"
+              >
+                {sendBroadcastMutation.isPending ? (
+                  <>
+                    <ClockIcon className="h-4 w-4 ml-2" />
+                    جاري الإرسال
+                  </>
+                ) : (
+                  <>
+                    <SendIcon className="h-4 w-4 ml-2" />
+                    إرسال
+                  </>
+                )}
+              </Button>
             </div>
           </form>
         </CardContent>
