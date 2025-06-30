@@ -117,9 +117,12 @@ def test_manual_offload(peer_url, task_data):
         return False, None
 
 def comprehensive_test():
-    """اختبار شامل للنظام"""
-    print("🚀 بدء الاختبار الشامل لنظام التوزيع")
+    """اختبار شامل للنظام مع تحسينات السرعة"""
+    print("🚀 بدء الاختبار الشامل المحسن لنظام التوزيع")
     print("=" * 50)
+    
+    # إضافة مراقب الوقت
+    start_total = time.time()
     
     # 1. فحص النظام المحلي
     cpu, memory = test_system_status()
@@ -203,6 +206,9 @@ def comprehensive_test():
         status = "✅" if success else "❌"
         print(f"   {status} {name}: {duration:.2f}s")
     
+    # حساب الوقت الإجمالي
+    total_duration = time.time() - start_total
+    print(f"\n⏱️ الوقت الإجمالي للاختبار: {total_duration:.2f} ثانية ({total_duration/60:.1f} دقيقة)")
     print("\n🎉 اكتمل الاختبار الشامل!")
 
 if __name__ == "__main__":
