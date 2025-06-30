@@ -1,0 +1,91 @@
+
+{
+  "platforms": {
+    "windows": {
+      "supported_versions": ["Windows 7", "Windows 8", "Windows 10", "Windows 11"],
+      "architectures": ["x64", "x86", "arm64"],
+      "file_extensions": [".exe", ".msi", ".appx"],
+      "requirements": {
+        "min_ram": "2GB",
+        "min_storage": "500MB",
+        "dotnet_version": "6.0"
+      }
+    },
+    "macos": {
+      "supported_versions": ["macOS 10.14+", "macOS 11+", "macOS 12+", "macOS 13+"],
+      "architectures": ["x64", "arm64"],
+      "file_extensions": [".dmg", ".pkg", ".app"],
+      "requirements": {
+        "min_ram": "4GB",
+        "min_storage": "1GB",
+        "xcode_version": "12.0+"
+      }
+    },
+    "linux": {
+      "supported_distributions": [
+        "Ubuntu 18.04+",
+        "Debian 10+", 
+        "CentOS 7+",
+        "Fedora 30+",
+        "Arch Linux",
+        "openSUSE"
+      ],
+      "architectures": ["x64", "arm64", "armhf"],
+      "file_extensions": [".AppImage", ".deb", ".rpm", ".tar.gz", ".snap"],
+      "requirements": {
+        "min_ram": "1GB",
+        "min_storage": "500MB",
+        "glibc_version": "2.17+"
+      }
+    },
+    "android": {
+      "supported_versions": ["Android 5.0+", "Android 6.0+", "Android 7.0+", "Android 8.0+", "Android 9.0+", "Android 10+", "Android 11+", "Android 12+", "Android 13+"],
+      "api_levels": ["21+"],
+      "architectures": ["arm64-v8a", "armeabi-v7a", "x86_64"],
+      "file_extensions": [".apk", ".aab"],
+      "requirements": {
+        "min_ram": "2GB",
+        "min_storage": "100MB",
+        "sdk_version": "33"
+      }
+    },
+    "ios": {
+      "supported_versions": ["iOS 12.0+", "iOS 13.0+", "iOS 14.0+", "iOS 15.0+", "iOS 16.0+"],
+      "architectures": ["arm64"],
+      "file_extensions": [".ipa"],
+      "requirements": {
+        "min_ram": "2GB",
+        "min_storage": "100MB",
+        "ios_deployment_target": "12.0"
+      }
+    },
+    "web": {
+      "supported_browsers": [
+        "Chrome 80+",
+        "Firefox 75+", 
+        "Safari 13+",
+        "Edge 80+"
+      ],
+      "features": ["PWA", "Service Worker", "WebAssembly"],
+      "requirements": {
+        "javascript": "ES2018+",
+        "webgl": "2.0"
+      }
+    }
+  },
+  "build_targets": {
+    "desktop": ["windows", "macos", "linux"],
+    "mobile": ["android", "ios"],
+    "web": ["pwa", "spa"]
+  },
+  "distribution": {
+    "stores": {
+      "windows": ["Microsoft Store", "Direct Download"],
+      "macos": ["App Store", "Direct Download"],
+      "linux": ["Snap Store", "Flathub", "Direct Download"],
+      "android": ["Google Play", "APK Direct"],
+      "ios": ["App Store"],
+      "web": ["PWA", "Direct URL"]
+    }
+  }
+}
