@@ -1,6 +1,7 @@
 import { GroupChat } from "@/components/group-chat";
 import { SuggestionsForm } from "@/components/suggestions-form";
 import { EnhancedAIChat } from "@/components/enhanced-ai-chat";
+import { VideoGameTasks } from "@/components/video-game-tasks";
 
 export default function BroadcastPage() {
   return (
@@ -31,6 +32,20 @@ export default function BroadcastPage() {
 
           <div className="mt-6">
             <EnhancedAIChat />
+          </div>
+        </div>
+
+        {/* مهام معالجة الفيديو والألعاب ثلاثية الأبعاد */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            🎮🎬 معالجة الفيديو والألعاب ثلاثية الأبعاد
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            مهام متقدمة لمعالجة الفيديو والرندر ثلاثي الأبعاد والذكاء الاصطناعي للألعاب
+          </p>
+
+          <div className="mt-6">
+            <VideoGameTasks />
           </div>
         </div>
 
