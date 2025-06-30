@@ -5,6 +5,8 @@ import { storage } from "./storage";
 import { insertNodeSchema, insertTaskSchema, insertSystemLogSchema, insertBroadcastMessageSchema } from "@shared/schema";
 import { OffloadSystem } from "./services/offload-system";
 import { SystemMonitor } from "./utils/system-monitor";
+import aiRoutes from './routes/ai';
+import enhancedAiRoutes from './routes/enhanced-ai';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -334,6 +336,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  app.use('/api/ai', aiRoutes);
+  app.use('/api/enhanced-ai', enhancedAiRoutes);
 
   return httpServer;
 }

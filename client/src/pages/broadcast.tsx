@@ -1,5 +1,6 @@
 import { GroupChat } from "@/components/group-chat";
 import { SuggestionsForm } from "@/components/suggestions-form";
+import { EnhancedAIChat } from "@/components/enhanced-ai-chat";
 
 export default function BroadcastPage() {
   return (
@@ -16,6 +17,20 @@ export default function BroadcastPage() {
 
           <div className="mt-6">
             <GroupChat />
+          </div>
+        </div>
+
+        {/* المساعد الذكي المحسن */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            🤖 نورا المحسنة - المساعد الذكي
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            مساعد ذكي متقدم مع قدرات التعلم الذاتي وتحليل الوسائط
+          </p>
+
+          <div className="mt-6">
+            <EnhancedAIChat />
           </div>
         </div>
 
