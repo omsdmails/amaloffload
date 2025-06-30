@@ -1,0 +1,2 @@
+[console_scripts]
+dts-start = dts_cli:main

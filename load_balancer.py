@@ -1,5 +1,6 @@
 # load_balancer.py
-import peer_discovery, requests, time, smart_tasks, psutil, socket
+import  requests, time, smart_tasks, psutil, socket
+from offload_core import peer_discovery
 
 def send(peer, func, *args, **kw):
     try:

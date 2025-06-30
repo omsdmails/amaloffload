@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 # offload_lib.py
+
 import time
 import math
 import random
@@ -27,25 +29,27 @@ class PeerListener:
         if info:
             ip = socket.inet_ntoa(info.addresses[0])
             self.peers.append(f"{ip}:{info.port}")
+            logging.info(f"🔗 جهاز مكتشف: {ip}:{info.port}")
+
+    def update_service(self, zc, type, name):
+        logging.debug(f"🔄 تم تحديث الخدمة: {name}")
+        pass  # هنا فقط لتفادي التحذير
 
 def discover_peers(timeout=1.5):
     """اكتشاف الأجهزة المتاحة - أولوية LAN ثم WAN ثم الإنترنت مع فحص المشروع"""
-    import socket
     import peer_discovery
     from project_identifier import verify_project_compatibility
-    
-    # أولاً: البحث في الشبكة المحلية (LAN)
+
     zc = Zeroconf()
     listener = PeerListener()
     ServiceBrowser(zc, "_http._tcp.local.", listener)
     time.sleep(timeout)
     zc.close()
-    
+
     lan_peers = []
     wan_peers = []
     internet_peers = []
-    
-    # تصنيف الأجهزة المحلية مع فحص المشروع
+
     for peer in listener.peers:
         ip = peer.split(':')[0]
         if verify_peer_project(ip):
@@ -53,8 +57,7 @@ def discover_peers(timeout=1.5):
                 lan_peers.append(peer)
             else:
                 wan_peers.append(peer)
-    
-    # إضافة الأجهزة من peer_discovery مع فحص المشروع
+
     all_discovered = list(peer_discovery.PEERS)
     for peer_url in all_discovered:
         peer_ip = peer_url.split("://")[1].split(":")[0]
@@ -65,26 +68,24 @@ def discover_peers(timeout=1.5):
             else:
                 if peer_url not in wan_peers:
                     internet_peers.append(peer_url)
-    
-    # إرجاع بالأولوية: LAN ثم WAN المحلي ثم الإنترنت
+
     all_peers = lan_peers + wan_peers + internet_peers
     logging.info(f"اكتُشف {len(all_peers)} جهاز DTS متوافق - LAN: {len(lan_peers)}, WAN: {len(wan_peers)}, Internet: {len(internet_peers)}")
-    
+
     return all_peers
 
 def verify_peer_project(ip, port=7520):
     """فحص إذا كان الجهاز يحتوي على نفس المشروع"""
     try:
-        import requests
         from project_identifier import verify_project_compatibility
-        
+
         project_url = f"http://{ip}:{port}/project_info"
         response = requests.get(project_url, timeout=2)
-        
+
         if response.status_code == 200:
             remote_info = response.json()
             return verify_project_compatibility(remote_info)
-            
+
     except:
         pass
     return False
@@ -132,14 +133,12 @@ def offload(func):
     """ديكوراتور لتوزيع المهام"""
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # حساب الحمل الحالي
         cpu = psutil.cpu_percent(interval=0.5) / 100.0
         mem = psutil.virtual_memory().available / (1024**2)
         complexity = estimate_complexity(func, args, kwargs)
-        
+
         logging.info(f"حمل النظام - CPU: {cpu:.2f}, الذاكرة: {mem:.1f}MB, تعقيد المهمة: {complexity}")
 
-        # اتخاذ قرار التوزيع (معالج فقط)
         if complexity > 50 or cpu > MAX_CPU:
             try:
                 peers = discover_peers()
@@ -156,7 +155,6 @@ def offload(func):
             except Exception as e:
                 logging.error(f"خطأ في التوزيع: {str(e)}")
 
-        # التنفيذ المحلي إذا فشل التوزيع
         logging.info("تنفيذ المهمة محلياً")
         return func(*args, **kwargs)
     return wrapper
@@ -165,11 +163,11 @@ def offload(func):
 
 @offload
 def matrix_multiply(size):
-    """ضرب مصفوفات كبيرة"""
+    """ضرب مصفوفتين عشوائيتين بالحجم"""
     import numpy as np
     A = np.random.rand(size, size)
     B = np.random.rand(size, size)
-    return {"result": np.dot(A, B).tolist()}
+    return np.dot(A, B).tolist()
 
 @offload
 def prime_calculation(n):

@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: distributed-task-system
+Version: 1.0
+Requires-Python: >=3.9
+Requires-Dist: flask
+Requires-Dist: requests
+Requires-Dist: psutil
+Requires-Dist: zeroconf
+Requires-Dist: flask_cors
+Requires-Dist: numpy
+Dynamic: requires-dist

@@ -1,0 +1,12 @@
+setup.cfg
+setup.py
+distributed_task_system.egg-info/PKG-INFO
+distributed_task_system.egg-info/SOURCES.txt
+distributed_task_system.egg-info/dependency_links.txt
+distributed_task_system.egg-info/entry_points.txt
+distributed_task_system.egg-info/requires.txt
+distributed_task_system.egg-info/top_level.txt
+offload_core/__init__.py
+offload_core/peer_discovery.py
+offload_core/smart_tasks.py
+offload_core/tasks.py
