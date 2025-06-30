@@ -12,11 +12,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     server: httpServer,
     path: '/api/ws' // Use specific path to avoid Vite HMR conflicts
   });
-  
+
   // Initialize offload system
   const offloadSystem = new OffloadSystem();
   const systemMonitor = new SystemMonitor();
-  
+
   // Start background services
   await offloadSystem.initialize();
   systemMonitor.start();
@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // WebSocket connection for real-time updates
   wss.on('connection', (ws) => {
     console.log('WebSocket client connected');
-    
+
     // Send initial data
     ws.send(JSON.stringify({
       type: 'initial_data',
@@ -48,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const nodes = await storage.getAllNodes();
       const tasks = await storage.getAllTasks();
       const logs = await storage.getRecentLogs(10);
-      
+
       const systemStats = {
         totalNodes: nodes.length,
         activeNodes: nodes.filter(n => n.status === 'online').length,
@@ -120,10 +120,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const taskData = insertTaskSchema.parse(req.body);
       const task = await storage.createTask(taskData);
-      
+
       // Try to offload the task
       offloadSystem.submitTask(task);
-      
+
       res.status(201).json(task);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -134,10 +134,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/execute', async (req, res) => {
     try {
       const { taskId, functionName, args, kwargs } = req.body;
-      
+
       // Execute the task
       const result = await offloadSystem.executeTask(functionName, args, kwargs);
-      
+
       // Update task status
       await storage.updateTask(taskId, {
         status: 'completed',
@@ -162,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/execute-smart', async (req, res) => {
     try {
       const { functionName, args = [], kwargs = {} } = req.body;
-      
+
       if (!functionName) {
         return res.status(400).json({ error: 'Function name is required' });
       }
@@ -182,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startTime = Date.now();
       const result = await offloadSystem.executeTask(functionName, args, kwargs);
       const duration = Date.now() - startTime;
-      
+
       // Update task with result
       await storage.updateTask(task.id, {
         status: 'completed',
@@ -227,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const logData = insertSystemLogSchema.parse(req.body);
       const log = await storage.createSystemLog(logData);
-      
+
       // Broadcast to WebSocket clients
       wss.clients.forEach(client => {
         if (client.readyState === 1) { // OPEN
@@ -237,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
         }
       });
-      
+
       res.status(201).json(log);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -259,11 +259,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedMessage = insertBroadcastMessageSchema.parse(req.body);
       const message = await storage.createBroadcastMessage(validatedMessage);
-      
+
       // Send broadcast via WebSocket to all connected clients
       const connectedNodes = await storage.getAllNodes();
       const activeConnections = Array.from(wss.clients).filter(ws => ws.readyState === 1);
-      
+
       const broadcastData = {
         type: 'broadcast_message',
         data: {
@@ -297,6 +297,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(messages);
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Suggestions API
+  app.post("/api/suggestions", async (req, res) => {
+    try {
+      const { name, email, suggestion } = req.body;
+
+      if (!name?.trim() || !suggestion?.trim()) {
+        return res.status(400).json({ 
+          error: "الاسم والاقتراح مطلوبان" 
+        });
+      }
+
+      // Store suggestion (you can add database storage here later)
+      const suggestionData = {
+        id: Date.now(),
+        name: name.trim(),
+        email: email?.trim() || null,
+        suggestion: suggestion.trim(),
+        timestamp: new Date().toISOString(),
+        ip: req.ip
+      };
+
+      console.log("📝 New suggestion received:", suggestionData);
+
+      res.json({ 
+        success: true, 
+        message: "تم استلام الاقتراح بنجاح" 
+      });
+    } catch (error) {
+      console.error("Error processing suggestion:", error);
+      res.status(500).json({ 
+        error: "حدث خطأ في الخادم" 
+      });
     }
   });
 
