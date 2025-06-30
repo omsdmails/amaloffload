@@ -51,8 +51,13 @@ export function useWebSocket() {
               queryClient.invalidateQueries({ queryKey: ["/api/broadcast"] });
               console.log('New broadcast message received:', data.message);
               break;
+            case 'broadcast':
+              // Handle broadcast type messages too
+              queryClient.invalidateQueries({ queryKey: ["/api/broadcast"] });
+              console.log('Broadcast received:', data);
+              break;
             default:
-              console.log('Unknown message type:', data.type);
+              console.log('Unknown message type:', data.type, data);
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

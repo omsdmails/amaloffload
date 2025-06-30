@@ -28,7 +28,7 @@ export class PeerDiscovery {
 
       // Browse for other services
       const browser = this.bonjour.find({ type: 'dts' });
-      
+
       browser.on('up', (service: any) => {
         this.handleServiceUp(service);
       });
@@ -39,6 +39,11 @@ export class PeerDiscovery {
 
       this.isRunning = true;
       console.log('Peer discovery started');
+      console.log("Current network configuration:", {
+        host: "0.0.0.0",
+        port: 5000,
+        external_connections: "scanning..."
+      });
     } catch (error) {
       console.error('Failed to start peer discovery:', error);
       throw error;
