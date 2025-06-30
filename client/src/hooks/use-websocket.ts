@@ -46,6 +46,11 @@ export function useWebSocket() {
               // Invalidate logs query
               queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
               break;
+            case 'broadcast_message':
+              // Invalidate broadcast messages query to refresh the list
+              queryClient.invalidateQueries({ queryKey: ["/api/broadcast"] });
+              console.log('New broadcast message received:', data.message);
+              break;
             default:
               console.log('Unknown message type:', data.type);
           }

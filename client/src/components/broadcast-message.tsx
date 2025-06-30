@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,10 +25,24 @@ export function BroadcastMessage() {
   const [senderNode, setSenderNode] = useState("dashboard-admin");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const prevMessagesCount = useRef(0);
 
   const { data: messages = [] } = useQuery<BroadcastMessage[]>({
     queryKey: ["/api/broadcast"],
   });
+
+  // Monitor for new messages and show notification
+  useEffect(() => {
+    if (messages.length > prevMessagesCount.current && prevMessagesCount.current > 0) {
+      const newMessage = messages[messages.length - 1];
+      toast({
+        title: "رسالة جديدة وصلت",
+        description: `من: ${newMessage.senderNode}`,
+        variant: "default",
+      });
+    }
+    prevMessagesCount.current = messages.length;
+  }, [messages, toast]);
 
   const sendBroadcastMutation = useMutation({
     mutationFn: async (data: { message: string; senderNode: string }) => {
