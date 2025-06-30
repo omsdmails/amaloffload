@@ -19,7 +19,7 @@ export class PeerDiscovery {
       this.bonjour.publish({
         name: process.env.NODE_NAME || 'dts-node',
         type: 'dts',
-        port: 5000,
+        port: 7520,
         txt: {
           version: '1.0',
           capabilities: 'matrix_multiply,prime_calculation,data_processing'
@@ -41,7 +41,7 @@ export class PeerDiscovery {
       console.log('Peer discovery started');
       console.log("Current network configuration:", {
         host: "0.0.0.0",
-        port: 5000,
+        port: 7520,
         external_connections: "scanning..."
       });
     } catch (error) {
