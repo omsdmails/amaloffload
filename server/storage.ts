@@ -4,16 +4,19 @@ import {
   systemMetrics, 
   systemLogs,
   broadcastMessages,
+  suggestions,
   type Node, 
   type Task, 
   type SystemMetrics, 
   type SystemLog,
   type BroadcastMessage,
+  type Suggestion,
   type InsertNode, 
   type InsertTask, 
   type InsertSystemMetrics, 
   type InsertSystemLog,
-  type InsertBroadcastMessage
+  type InsertBroadcastMessage,
+  type InsertSuggestion
 } from "@shared/schema";
 
 export interface IStorage {
@@ -43,6 +46,12 @@ export interface IStorage {
   createBroadcastMessage(message: InsertBroadcastMessage): Promise<BroadcastMessage>;
   getAllBroadcastMessages(): Promise<BroadcastMessage[]>;
   updateBroadcastMessage(id: number, updates: Partial<BroadcastMessage>): Promise<BroadcastMessage | undefined>;
+  
+  // Suggestions
+  createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion>;
+  getAllSuggestions(): Promise<Suggestion[]>;
+  updateSuggestion(id: number, updates: Partial<Suggestion>): Promise<Suggestion | undefined>;
+  voteSuggestion(id: number): Promise<Suggestion | undefined>;
 }
 
 export class MemStorage implements IStorage {

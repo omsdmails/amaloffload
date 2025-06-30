@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { RadioIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { RadioIcon, CheckCircleIcon, XCircleIcon, ClockIcon, SendIcon, UsersIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface BroadcastMessage {
@@ -26,23 +28,36 @@ export function BroadcastMessage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const prevMessagesCount = useRef(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: messages = [] } = useQuery<BroadcastMessage[]>({
     queryKey: ["/api/broadcast"],
+    refetchInterval: 2000, // Auto-refresh every 2 seconds for chat-like experience
   });
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Monitor for new messages and show notification
   useEffect(() => {
     if (messages.length > prevMessagesCount.current && prevMessagesCount.current > 0) {
       const newMessage = messages[messages.length - 1];
-      toast({
-        title: "رسالة جديدة وصلت",
-        description: `من: ${newMessage.senderNode}`,
-        variant: "default",
-      });
+      if (newMessage.senderNode !== senderNode) {
+        toast({
+          title: "رسالة جديدة وصلت",
+          description: `من: ${newMessage.senderNode}`,
+          variant: "default",
+        });
+      }
     }
     prevMessagesCount.current = messages.length;
-  }, [messages, toast]);
+  }, [messages, toast, senderNode]);
 
   const sendBroadcastMutation = useMutation({
     mutationFn: async (data: { message: string; senderNode: string }) => {

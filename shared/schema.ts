@@ -52,6 +52,20 @@ export const broadcastMessages = pgTable("broadcast_messages", {
   recipients: jsonb("recipients").default([]),
 });
 
+export const suggestions = pgTable("suggestions", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // feature, bug, improvement
+  priority: text("priority").default("medium").notNull(), // low, medium, high
+  status: text("status").default("pending").notNull(), // pending, reviewing, approved, rejected, implemented
+  submittedBy: text("submitted_by").notNull(),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  votes: integer("votes").default(0).notNull(),
+  implementation: text("implementation"),
+  adminResponse: text("admin_response"),
+});
+
 export const insertNodeSchema = createInsertSchema(nodes).omit({
   id: true,
   lastSeen: true,
@@ -79,14 +93,22 @@ export const insertBroadcastMessageSchema = createInsertSchema(broadcastMessages
   delivered: true,
 });
 
+export const insertSuggestionSchema = createInsertSchema(suggestions).omit({
+  id: true,
+  submittedAt: true,
+  votes: true,
+});
+
 export type Node = typeof nodes.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type SystemMetrics = typeof systemMetrics.$inferSelect;
 export type SystemLog = typeof systemLogs.$inferSelect;
 export type BroadcastMessage = typeof broadcastMessages.$inferSelect;
+export type Suggestion = typeof suggestions.$inferSelect;
 
 export type InsertNode = z.infer<typeof insertNodeSchema>;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type InsertSystemMetrics = z.infer<typeof insertSystemMetricsSchema>;
 export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
 export type InsertBroadcastMessage = z.infer<typeof insertBroadcastMessageSchema>;
+export type InsertSuggestion = z.infer<typeof insertSuggestionSchema>;
