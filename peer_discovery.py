@@ -43,7 +43,7 @@ DISCOVERY_SERVERS = [
 ]
 
 def scan_internet_peers():
-    """البحث عن أجهزة جديدة على الإنترنت"""
+    """البحث عن أجهزة جديدة على الإنترنت مع التحقق من المشروع"""
     import requests
     try:
         # الحصول على IP العام
@@ -57,14 +57,26 @@ def scan_internet_peers():
             for i in range(1, 255):
                 potential_peer = f"http://{base_ip}.{i}:7520/run"
                 try:
-                    # فحص سريع للاتصال
-                    test_response = requests.get(
-                        potential_peer.replace("/run", "/health"), 
-                        timeout=1
-                    )
+                    # فحص صفحة الصحة
+                    health_url = potential_peer.replace("/run", "/health")
+                    test_response = requests.get(health_url, timeout=1)
+                    
                     if test_response.status_code == 200:
-                        PEERS.add(potential_peer)
-                        print(f"✅ اكتُشف جهاز جديد: {potential_peer}")
+                        # فحص هوية المشروع
+                        project_url = potential_peer.replace("/run", "/project_info")
+                        project_response = requests.get(project_url, timeout=1)
+                        
+                        if project_response.status_code == 200:
+                            project_data = project_response.json()
+                            
+                            # التحقق من المشروع الصحيح
+                            if (project_data.get("project_name") == "distributed-task-system" and
+                                project_data.get("version") == "1.0"):
+                                PEERS.add(potential_peer)
+                                print(f"✅ اكتُشف جهاز DTS صحيح: {potential_peer}")
+                            else:
+                                print(f"⚠️ جهاز {potential_peer} يحتوي على مشروع مختلف")
+                                
                 except:
                     continue
     except Exception as e:

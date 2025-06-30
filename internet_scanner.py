@@ -49,24 +49,41 @@ class InternetScanner:
             return []
     
     def check_dts_node(self, ip: str, port: int = 7520) -> str:
-        """فحص IP معين للتأكد من وجود خادم DTS"""
+        """فحص IP معين للتأكد من وجود خادم DTS مع المشروع"""
         try:
-            url = f"http://{ip}:{port}/health"
-            response = requests.get(url, timeout=2)
+            # فحص صفحة الصحة العامة
+            health_url = f"http://{ip}:{port}/health"
+            response = requests.get(health_url, timeout=2)
             
             if response.status_code == 200:
-                # تحقق إضافي من أن هذا خادم DTS
+                # فحص وجود المشروع الصحيح
                 run_url = f"http://{ip}:{port}/run"
-                test_response = requests.post(
-                    run_url, 
-                    json={"func": "health_check"}, 
-                    timeout=2
-                )
                 
-                if test_response.status_code in [200, 404]:  # 404 يعني الخادم يعمل لكن الدالة غير موجودة
-                    logging.info(f"✅ اكتُشف خادم DTS: {ip}:{port}")
-                    return run_url
+                # اختبار مهمة من المشروع للتأكد
+                test_payload = {
+                    "func": "matrix_multiply",
+                    "args": [2],
+                    "kwargs": {}
+                }
+                
+                test_response = requests.post(run_url, json=test_payload, timeout=3)
+                
+                # فحص إضافي للتأكد من هوية المشروع
+                project_check = requests.get(f"http://{ip}:{port}/project_info", timeout=2)
+                
+                if (test_response.status_code in [200, 404] and 
+                    project_check.status_code == 200):
                     
+                    project_data = project_check.json()
+                    
+                    # التحقق من معرف المشروع الصحيح
+                    if (project_data.get("project_name") == "distributed-task-system" and
+                        project_data.get("version") == "1.0"):
+                        logging.info(f"✅ اكتُشف خادم DTS صحيح: {ip}:{port}")
+                        return run_url
+                    else:
+                        logging.warning(f"⚠️ خادم على {ip}:{port} لكن مشروع مختلف")
+                        
         except:
             pass
         return None

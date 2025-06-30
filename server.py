@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from your_tasks import multiply_task  # دالة مربوطة بـ @offload
+import json
+from your_tasks import *
+from project_identifier import create_project_endpoint, get_project_info
+import logging
 
 app = Flask(__name__)
 CORS(app)
@@ -16,8 +19,14 @@ def multiply():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "healthy", "port": 7520})
+
+@app.route('/project_info', methods=['GET'])
+def project_info():
+    return create_project_endpoint()
+
 if __name__ == "__main__":
     # هذا العنوان يسمح بالاستماع على IP خارجي لتلقي الاتصالات من الإنترنت
     app.run(host="0.0.0.0", port=7520)
-
-

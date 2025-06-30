@@ -29,9 +29,10 @@ class PeerListener:
             self.peers.append(f"{ip}:{info.port}")
 
 def discover_peers(timeout=1.5):
-    """اكتشاف الأجهزة المتاحة - أولوية LAN ثم WAN ثم الإنترنت"""
+    """اكتشاف الأجهزة المتاحة - أولوية LAN ثم WAN ثم الإنترنت مع فحص المشروع"""
     import socket
     import peer_discovery
+    from project_identifier import verify_project_compatibility
     
     # أولاً: البحث في الشبكة المحلية (LAN)
     zc = Zeroconf()
@@ -44,30 +45,49 @@ def discover_peers(timeout=1.5):
     wan_peers = []
     internet_peers = []
     
-    # تصنيف الأجهزة المحلية
+    # تصنيف الأجهزة المحلية مع فحص المشروع
     for peer in listener.peers:
         ip = peer.split(':')[0]
-        if is_local_network(ip):
-            lan_peers.append(peer)
-        else:
-            wan_peers.append(peer)
+        if verify_peer_project(ip):
+            if is_local_network(ip):
+                lan_peers.append(peer)
+            else:
+                wan_peers.append(peer)
     
-    # إضافة الأجهزة من peer_discovery
+    # إضافة الأجهزة من peer_discovery مع فحص المشروع
     all_discovered = list(peer_discovery.PEERS)
     for peer_url in all_discovered:
         peer_ip = peer_url.split("://")[1].split(":")[0]
-        if is_local_network(peer_ip):
-            if peer_url not in lan_peers:
-                lan_peers.append(peer_url)
-        else:
-            if peer_url not in wan_peers:
-                internet_peers.append(peer_url)
+        if verify_peer_project(peer_ip):
+            if is_local_network(peer_ip):
+                if peer_url not in lan_peers:
+                    lan_peers.append(peer_url)
+            else:
+                if peer_url not in wan_peers:
+                    internet_peers.append(peer_url)
     
     # إرجاع بالأولوية: LAN ثم WAN المحلي ثم الإنترنت
     all_peers = lan_peers + wan_peers + internet_peers
-    logging.info(f"اكتُشف {len(all_peers)} جهاز - LAN: {len(lan_peers)}, WAN: {len(wan_peers)}, Internet: {len(internet_peers)}")
+    logging.info(f"اكتُشف {len(all_peers)} جهاز DTS متوافق - LAN: {len(lan_peers)}, WAN: {len(wan_peers)}, Internet: {len(internet_peers)}")
     
     return all_peers
+
+def verify_peer_project(ip, port=7520):
+    """فحص إذا كان الجهاز يحتوي على نفس المشروع"""
+    try:
+        import requests
+        from project_identifier import verify_project_compatibility
+        
+        project_url = f"http://{ip}:{port}/project_info"
+        response = requests.get(project_url, timeout=2)
+        
+        if response.status_code == 200:
+            remote_info = response.json()
+            return verify_project_compatibility(remote_info)
+            
+    except:
+        pass
+    return False
 
 def is_local_network(ip):
     """فحص إذا كان IP في الشبكة المحلية"""
