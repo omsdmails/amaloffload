@@ -30,15 +30,56 @@ def discover_loop():
     zeroconf.ServiceBrowser(zc, SERVICE, Listener())
     while True: time.sleep(5)
 
-# ❸ قائمة WAN ثابتة (اختياري)
+# ❸ قائمة WAN ثابتة وخوادم اكتشاف عامة
 STATIC_WAN = [
+    # خوادم معروفة (يمكن إضافة المزيد)
     # "http://your-vps-ip:7520/run",
 ]
 
+# خوادم اكتشاف عامة للبحث عن أجهزة جديدة
+DISCOVERY_SERVERS = [
+    "https://api.github.com/users",  # مثال - يمكن استبداله
+    "https://httpbin.org/ip",        # للحصول على IP العام
+]
+
+def scan_internet_peers():
+    """البحث عن أجهزة جديدة على الإنترنت"""
+    import requests
+    try:
+        # الحصول على IP العام
+        response = requests.get("https://httpbin.org/ip", timeout=5)
+        public_ip = response.json().get("origin", "").split(",")[0]
+        
+        # البحث في نطاق الـ subnet للـ IP العام
+        ip_parts = public_ip.split(".")
+        if len(ip_parts) == 4:
+            base_ip = ".".join(ip_parts[:3])
+            for i in range(1, 255):
+                potential_peer = f"http://{base_ip}.{i}:7520/run"
+                try:
+                    # فحص سريع للاتصال
+                    test_response = requests.get(
+                        potential_peer.replace("/run", "/health"), 
+                        timeout=1
+                    )
+                    if test_response.status_code == 200:
+                        PEERS.add(potential_peer)
+                        print(f"✅ اكتُشف جهاز جديد: {potential_peer}")
+                except:
+                    continue
+    except Exception as e:
+        print(f"⚠️ خطأ في البحث على الإنترنت: {e}")
+
 def wan_loop():
     while True:
+        # إضافة الخوادم الثابتة
         PEERS.update(STATIC_WAN)
-        time.sleep(60)
+        
+        # البحث عن أجهزة جديدة كل 5 دقائق
+        if len(threading.active_count()) < 10:  # تجنب إنشاء خيوط كثيرة
+            threading.Thread(target=scan_internet_peers, daemon=True).start()
+        
+        time.sleep(300)  # 5 دقائق
 
 # إطلاق الخيوط
 threading.Thread(target=register_service, daemon=True).start()

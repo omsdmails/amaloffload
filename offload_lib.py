@@ -29,8 +29,9 @@ class PeerListener:
             self.peers.append(f"{ip}:{info.port}")
 
 def discover_peers(timeout=1.5):
-    """اكتشاف الأجهزة المتاحة - أولوية LAN ثم WAN"""
+    """اكتشاف الأجهزة المتاحة - أولوية LAN ثم WAN ثم الإنترنت"""
     import socket
+    import peer_discovery
     
     # أولاً: البحث في الشبكة المحلية (LAN)
     zc = Zeroconf()
@@ -41,8 +42,9 @@ def discover_peers(timeout=1.5):
     
     lan_peers = []
     wan_peers = []
+    internet_peers = []
     
-    # تصنيف الأجهزة حسب LAN/WAN
+    # تصنيف الأجهزة المحلية
     for peer in listener.peers:
         ip = peer.split(':')[0]
         if is_local_network(ip):
@@ -50,8 +52,22 @@ def discover_peers(timeout=1.5):
         else:
             wan_peers.append(peer)
     
-    # إرجاع LAN أولاً ثم WAN
-    return lan_peers + wan_peers
+    # إضافة الأجهزة من peer_discovery
+    all_discovered = list(peer_discovery.PEERS)
+    for peer_url in all_discovered:
+        peer_ip = peer_url.split("://")[1].split(":")[0]
+        if is_local_network(peer_ip):
+            if peer_url not in lan_peers:
+                lan_peers.append(peer_url)
+        else:
+            if peer_url not in wan_peers:
+                internet_peers.append(peer_url)
+    
+    # إرجاع بالأولوية: LAN ثم WAN المحلي ثم الإنترنت
+    all_peers = lan_peers + wan_peers + internet_peers
+    logging.info(f"اكتُشف {len(all_peers)} جهاز - LAN: {len(lan_peers)}, WAN: {len(wan_peers)}, Internet: {len(internet_peers)}")
+    
+    return all_peers
 
 def is_local_network(ip):
     """فحص إذا كان IP في الشبكة المحلية"""

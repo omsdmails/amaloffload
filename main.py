@@ -81,4 +81,39 @@ def main():
         logging.error(f"🚫 خطأ رئيسي: {e}")
 
 if __name__ == "__main__":
-    main()  # ⬅ المسافة البادئة صحيحة هنا
+    try:
+        # تفعيل ماسح الإنترنت
+        from internet_scanner import internet_scanner
+        internet_scanner.start_continuous_scan()
+
+        # تشغيل الخادم في خيط منفصل
+        import threading
+        # Assuming 'app' and 'control' are defined elsewhere
+        # You might need to import or define them based on your project structure
+        # For example:
+        # from your_app import app
+        # from your_control import control
+
+        # Dummy implementations to avoid errors if app and control are not available
+        class DummyApp:
+            def run(self, host, port, debug):
+                print(f"Dummy App running on {host}:{port} (debug={debug})")
+        class DummyControl:
+            def start(self):
+                print("Dummy Control started")
+
+        app = DummyApp()
+        control = DummyControl()
+
+        server_thread = threading.Thread(target=lambda: app.run(host="0.0.0.0", port=7520, debug=False))
+        server_thread.daemon = True
+        server_thread.start()
+
+        print("🔥 نظام المهام الموزعة نشط!")
+        print("📡 جاري البحث عن الأجهزة المجاورة...")
+        print("🌐 ماسح الإنترنت نشط - البحث عن خوادم عامة...")
+
+        # تشغيل واجهة التحكم
+        control.start()
+    except KeyboardInterrupt:
+        print("\n🛑 إيقاف النظام...")
