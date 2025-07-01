@@ -36,21 +36,21 @@ jobs:
       - name: Install dependencies
         run: |
           echo "requirements.txt exists? $( [ -f requirements.txt ] && echo yes || echo no )"
-          pip install --upgrade pip==23.2.1 wheel setuptools || { echo "❌ Failed upgrading pip"; exit 1; }
+          python3 -m pip install --upgrade pip==23.2.1 wheel setuptools || { echo "❌ Failed upgrading pip"; exit 1; }
           if [ -f requirements.txt ]; then
-            pip install --retries 3 --timeout 30 -r requirements.txt || { echo "❌ Dependency install failed"; exit 1; }
+            python3 -m pip install --retries 3 --timeout 30 -r requirements.txt || { echo "❌ Dependency install failed"; exit 1; }
           else
-            pip install --retries 3 --timeout 30 -e . || { echo "❌ Editable install failed"; exit 1; }
+            python3 -m pip install --retries 3 --timeout 30 -e . || { echo "❌ Editable install failed"; exit 1; }
           fi
-          pip install pyinstaller==5.13.0 || { echo "❌ PyInstaller install failed"; exit 1; }
+          python3 -m pip install pyinstaller==5.13.0 || { echo "❌ PyInstaller install failed"; exit 1; }
 
       - name: Run Linter
         run: |
-          pip install flake8==6.0.0
-          flake8 . --exit-zero
+          python3 -m pip install flake8==6.0.0
+          python3 -m flake8 . --exit-zero
 
       - name: Run Tests
-        run: python -m unittest discover tests
+        run: python3 -m unittest discover tests
 
       - name: Verify dist folder
         run: |
@@ -64,15 +64,14 @@ jobs:
         run: |
           case "${{ matrix.os }}" in
             windows-latest)
-              pyinstaller --onefile --name OffloadHelper main.py
+              python3 -m PyInstaller --onefile --name OffloadHelper main.py
               ;;
             ubuntu-latest)
-              pyinstaller --onefile --name offloadhelper_linux main.py
+              python3 -m PyInstaller --onefile --name offloadhelper_linux main.py
               ;;
             macos-latest)
-              # Build both archs then merge into a universal binary
-              pyinstaller --onefile --target-arch x86_64 --name offloadhelper_macos_x86 main.py
-              pyinstaller --onefile --target-arch arm64  --name offloadhelper_macos_arm main.py
+              python3 -m PyInstaller --onefile --target-arch x86_64 --name offloadhelper_macos_x86 main.py
+              python3 -m PyInstaller --onefile --target-arch arm64  --name offloadhelper_macos_arm main.py
               lipo -create dist/offloadhelper_macos_x86 dist/offloadhelper_macos_arm -output dist/offloadhelper_macos
               ;;
           esac
@@ -113,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, release]
     steps:
-      - name: Send Slack notification on failure
+      - name: Notify on failure
         if: failure()
         uses: rtCamp/action-slack-notify@v2
         with:
