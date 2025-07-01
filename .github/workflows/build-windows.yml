@@ -1,90 +1,83 @@
-# .github/workflows/build-windows.yml
+##
+
+## Workflow: Build Release Binaries for Windows, Linux & macOS
 
 ##
-## Workflow: Build Release Binaries for Windows, Linux & macOS
-##
+
 ## This workflow installs dependencies, lints, tests, and builds executables
+
 ## for multiple OSes and Python versions, then uploads artifacts.
+
 ##
 
 name: Build Release Binaries
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+push:
+branches: \[ main ]
+workflow\_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.7, 3.8, 3.9, 3.10, 3.11]
-    runs-on: ${{ matrix.os }}
+build:
+strategy:
+matrix:
+os: \[windows-latest, ubuntu-latest, macos-latest]
+python-version: \[3.7, 3.8, 3.9, 3.10, 3.11]
+runs-on: \${{ matrix.os }}
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+```
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v4
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+  - name: Cache pip dependencies
+    uses: actions/cache@v3
+    with:
+      path: ~/.cache/pip
+      key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+      restore-keys: |
+        ${{ runner.os }}-pip-
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
+  - name: Set up Python
+    uses: actions/setup-python@v4
+    with:
+      python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          echo "requirements.txt موجود؟ $( [ -f requirements.txt ] && echo نعم || echo لا )"
-          pip install --upgrade pip==23.2.1 wheel setuptools
-          if [ -f requirements.txt ]; then
-            pip install --retries 3 --timeout 30 -r requirements.txt
-          else
-            pip install --retries 3 --timeout 30 -e .
-          fi
-          pip install pyinstaller==5.13.0
+  - name: Install dependencies
+    run: |
+      pip install --upgrade pip==23.2.1 wheel setuptools
+      if [ -f requirements.txt ]; then pip install --retries 3 --timeout 30 -r requirements.txt; else pip install --retries 3 --timeout 30 -e .; fi
+      pip install pyinstaller==5.13.0
 
-      - name: Run Linter
-        run: |
-          pip install flake8==6.0.0
-          flake8 .
+  - name: Run Linter
+    run: |
+      pip install flake8
+      flake8 .
 
-      - name: Run Tests
-        run: python -m unittest discover tests
+  - name: Run Tests
+    run: python -m unittest discover tests
 
-      - name: Verify build output
-        run: |
-          ls dist || (echo "❌ مجلد dist/ فارغ!" && exit 1)
+  - name: Build executable
+    shell: bash
+    run: |
+      case "${{ matrix.os }}" in
+        windows-latest)
+          pyinstaller --onefile --name OffloadHelper main.py
+          ;;
+        ubuntu-latest)
+          pyinstaller --onefile --name offloadhelper_linux main.py
+          ;;
+        macos-latest)
+          pyinstaller --onefile --target-arch x86_64 --target-arch arm64 --name offloadhelper_macos main.py
+          ;;
+      esac
 
-      - name: Build executable
-        shell: bash
-        run: |
-          case "${{ matrix.os }}" in
-            windows-latest)
-              pyinstaller --onefile --name OffloadHelper main.py
-              ;;
-            ubuntu-latest)
-              pyinstaller --onefile --name offloadhelper_linux main.py
-              ;;
-            macos-latest)
-              # two-pass universal build
-              pyinstaller --onefile --target-arch x86_64 --name offloadhelper_macos_x86 main.py
-              pyinstaller --onefile --target-arch arm64  --name offloadhelper_macos_arm main.py
-              lipo -create dist/offloadhelper_macos_x86 dist/offloadhelper_macos_arm -output dist/offloadhelper_macos
-              ;;
-          esac
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: offloadhelper-${{ matrix.os }}-py${{ matrix.python-version }}-${{ github.run_number }}
-          path: |
-            dist/OffloadHelper.exe
-            dist/offloadhelper_linux
-            dist/offloadhelper_macos
+  - name: Upload build artifacts
+    uses: actions/upload-artifact@v4
+    with:
+      name: offloadhelper-${{ matrix.os }}-py${{ matrix.python-version }}-${{ github.run_number }}
+      path: |
+        dist/OffloadHelper.exe
+        dist/offloadhelper_linux
+        dist/offloadhelper_macos
+```
