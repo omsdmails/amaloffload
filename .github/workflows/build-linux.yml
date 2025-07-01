@@ -3,56 +3,85 @@
 name: Build Linux Release
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+push:
+branches: \[ main ]
+workflow\_dispatch:
 
 jobs:
-  build_linux:
-    runs-on: ubuntu-latest
-    name: Build Linux Binary & AppImage
+build\_linux:
+runs-on: ubuntu-latest
+name: Build Linux Binary & AppImage
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+```
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+  - name: Set up Python 3.10
+    uses: actions/setup-python@v4
+    with:
+      python-version: '3.10'
 
-      - name: Install Python dependencies
-        run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          pip install pyinstaller==5.13.0
+  - name: Install Python dependencies
+    run: |
+      python3 -m pip install --upgrade pip setuptools wheel
+      pip install pyinstaller==5.13.0
 
-      - name: Build standalone binary
-        run: |
-          pyinstaller --onefile --name offloadhelper_linux main.py
+  - name: Build standalone binary
+    run: |
+      pyinstaller --onefile --name offloadhelper_linux main.py
 
-      - name: Download linuxdeploy AppImage
-        run: |
-          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage
+  - name: Download linuxdeploy AppImage
+    run: |
+      wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+      chmod +x linuxdeploy-x86_64.AppImage
 
-      - name: Prepare AppDir
-        run: |
-          mkdir -p AppDir/usr/bin
-          cp dist/offloadhelper_linux AppDir/usr/bin/offloadhelper
+  - name: Prepare AppDir
+    run: |
+      mkdir -p AppDir/usr/bin
+      cp dist/offloadhelper_linux AppDir/usr/bin/offloadhelper
 
-      - name: Bundle into AppImage
-        run: |
-          ./linuxdeploy-x86_64.AppImage --appdir AppDir \
-            --output appimage
+  - name: Create desktop file
+    run: |
+      mkdir -p AppDir/usr/share/applications
+      cat > AppDir/usr/share/applications/offloadhelper.desktop << 'EOF'
+```
 
-      - name: Upload raw binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: offloadhelper-linux-binary
-          path: dist/offloadhelper_linux
+\[Desktop Entry]
+Name=OffloadHelper
+Exec=offloadhelper
+Icon=offloadhelper
+Type=Application
+Categories=Utility;
+EOF
 
-      - name: Upload AppImage
-        uses: actions/upload-artifact@v4
-        with:
-          name: offloadhelper-linux-AppImage
-          path: '*.AppImage'
+```
+  - name: Add icon placeholder
+    run: |
+      mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+      if [ -f resources/offloadhelper.png ]; then
+        cp resources/offloadhelper.png AppDir/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+      else
+        # Create a blank placeholder using ImageMagick
+        convert -size 256x256 xc:gray AppDir/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+      fi
+
+  - name: Bundle into AppImage
+    run: |
+      ./linuxdeploy-x86_64.AppImage --appdir AppDir \
+        --desktop-file AppDir/usr/share/applications/offloadhelper.desktop \
+        --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/offloadhelper.png \
+        --output appimage
+
+  - name: Upload raw binary
+    uses: actions/upload-artifact@v4
+    with:
+      name: offloadhelper-linux-binary
+      path: dist/offloadhelper_linux
+
+  - name: Upload AppImage
+    uses: actions/upload-artifact@v4
+    with:
+      name: offloadhelper-linux-AppImage
+      path: '*.AppImage'
+```
