@@ -12,6 +12,7 @@ jobs:
   build_linux:
     name: Build Linux Binary & AppImage
     runs-on: ubuntu-latest
+
     env:
       APP_DIR: AppDir
 
@@ -34,18 +35,19 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python3 -m pip install --upgrade pip==23.2.1 setuptools wheel || exit 1
-          python3 -m pip install pyinstaller==5.13.0 || exit 1
+          python3 -m pip install --upgrade pip==23.2.1 setuptools wheel
+          python3 -m pip install pyinstaller==5.13.0
 
       - name: Clean dist folder
         run: rm -rf dist
 
       - name: Build standalone binary
-        run: pyinstaller --onefile --name offloadhelper_linux main.py
+        run: |
+          pyinstaller --onefile --name offloadhelper_linux main.py
 
       - name: Verify binary
         run: |
-          if [ ! -f dist/offloadhelper_linux ]; then
+          if [[ ! -f dist/offloadhelper_linux ]]; then
             echo "❌ Binary missing!" && exit 1
           fi
           file dist/offloadhelper_linux
@@ -75,11 +77,13 @@ EOF
 
       - name: Add icon (or placeholder)
         run: |
-          if [ -f resources/offloadhelper.png ]; then
-            cp resources/offloadhelper.png $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+          ICON_PATH="resources/offloadhelper.png"
+          TARGET_PATH="$APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png"
+          if [[ -f "$ICON_PATH" ]]; then
+            cp "$ICON_PATH" "$TARGET_PATH"
           else
             sudo apt-get update && sudo apt-get install -y imagemagick
-            convert -size 256x256 xc:gray $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+            convert -size 256x256 xc:gray "$TARGET_PATH"
           fi
 
       - name: Bundle into AppImage
@@ -93,12 +97,10 @@ EOF
         uses: actions/upload-artifact@v4
         with:
           name: offloadhelper-linux-binary
-          path:
-            - dist/offloadhelper_linux
+          path: dist/offloadhelper_linux
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
           name: offloadhelper-linux-AppImage
-          path:
-            - '*.AppImage'
+          path: '*.AppImage'
