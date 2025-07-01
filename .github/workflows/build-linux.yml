@@ -3,46 +3,106 @@
 name: Build Linux Release
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+push:
+branches:
+\- main
+workflow\_dispatch:
 
 jobs:
-  build_linux:
-    name: Build Linux Binary
-    runs-on: ubuntu-latest
+build\_linux:
+name: Build Linux Binary & AppImage
+runs-on: ubuntu-latest
+env:
+APP\_DIR: AppDir
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+```
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+  - name: Set up Python 3.10
+    uses: actions/setup-python@v4
+    with:
+      python-version: '3.10'
 
-      - name: Install PyInstaller
-        run: |
-          python3 -m pip install --upgrade pip==23.2.1 setuptools wheel
-          python3 -m pip install pyinstaller==5.13.0
+  - name: Cache pip dependencies
+    uses: actions/cache@v3
+    with:
+      path: ~/.cache/pip
+      key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+      restore-keys: |
+        ${{ runner.os }}-pip-
 
-      - name: Build standalone binary
-        run: |
-          pyinstaller --onefile \
-            --name offloadhelper_linux \
-            --hidden-import=ipaddress \
-            --hidden-import=urllib.parse \
-            main.py
+  - name: Install Python dependencies
+    run: |
+      python3 -m pip install --upgrade pip==23.2.1 setuptools wheel || exit 1
+      python3 -m pip install pyinstaller==5.13.0 || exit 1
 
-      - name: Verify binary exists
-        run: |
-          if [ ! -f dist/offloadhelper_linux ]; then
-            echo "❌ dist/offloadhelper_linux not found" && exit 1
-          fi
+  - name: Clean dist folder
+    run: rm -rf dist
 
-      - name: Upload Linux binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: offloadhelper-linux
-          path: dist/offloadhelper_linux
+  - name: Build standalone binary
+    run: |
+      pyinstaller --onefile \
+        --name offloadhelper_linux \
+        --hidden-import=ipaddress \
+        --hidden-import=urllib.parse \
+        --hidden-import=pyimod02_importers \
+        --hidden-import=pathlib \
+        main.py
+
+  - name: Verify binary
+    run: |
+      if [ ! -f dist/offloadhelper_linux ]; then
+        echo "❌ Binary missing!" && exit 1
+      fi
+
+  - name: Download linuxdeploy AppImage tool
+    run: |
+      wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+      chmod +x linuxdeploy-x86_64.AppImage
+
+  - name: Prepare AppDir structure
+    run: |
+      mkdir -p $APP_DIR/usr/bin
+      mkdir -p $APP_DIR/usr/share/applications
+      mkdir -p $APP_DIR/usr/share/icons/hicolor/256x256/apps
+      cp dist/offloadhelper_linux $APP_DIR/usr/bin/offloadhelper
+
+  - name: Create desktop entry
+    run: |
+      echo '[Desktop Entry]' > $APP_DIR/usr/share/applications/offloadhelper.desktop
+      echo 'Name=OffloadHelper' >> $APP_DIR/usr/share/applications/offloadhelper.desktop
+      echo 'Exec=offloadhelper' >> $APP_DIR/usr/share/applications/offloadhelper.desktop
+      echo 'Icon=offloadhelper' >> $APP_DIR/usr/share/applications/offloadhelper.desktop
+      echo 'Type=Application' >> $APP_DIR/usr/share/applications/offloadhelper.desktop
+      echo 'Categories=Utility;' >> $APP_DIR/usr/share/applications/offloadhelper.desktop
+
+  - name: Add icon (or placeholder)
+    run: |
+      if [ -f resources/offloadhelper.png ]; then
+        cp resources/offloadhelper.png $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+      else
+        sudo apt-get update && sudo apt-get install -y imagemagick
+        convert -size 256x256 xc:gray $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+      fi
+
+  - name: Bundle into AppImage
+    run: |
+      ./linuxdeploy-x86_64.AppImage --appdir $APP_DIR \
+        --desktop-file $APP_DIR/usr/share/applications/offloadhelper.desktop \
+        --icon-file $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png \
+        --output appimage
+
+  - name: Upload raw binary
+    uses: actions/upload-artifact@v4
+    with:
+      name: offloadhelper-linux-binary
+      path: dist/offloadhelper_linux
+
+  - name: Upload AppImage
+    uses: actions/upload-artifact@v4
+    with:
+      name: offloadhelper-linux-AppImage
+      path: '*.AppImage'
+```
