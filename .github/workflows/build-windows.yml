@@ -1,7 +1,6 @@
-```yaml
 # .github/workflows/build-windows.yml
 
-name: Build & Release Binaries
+name: Build Windows Release
 
 on:
   push:
@@ -9,59 +8,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+  build_windows:
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clean dist folder
-        run: rm -rf dist
-
-      - name: Set up Python
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Install dependencies
+        shell: pwsh
         run: |
-          pip install --upgrade pip wheel setuptools
-          if [ -f requirements.txt ]; then
+          python -m pip install --upgrade pip wheel setuptools pyinstaller
+          if (Test-Path requirements.txt) {
             pip install -r requirements.txt
-          else
+          } else {
             pip install -e .
-          fi
+          }
 
-      - name: Build executable for Windows
-        if: ${{ matrix.os == 'windows-latest' }}
+      - name: Build Windows executable
+        shell: pwsh
         run: pyinstaller --onefile --name OffloadHelper main.py
 
-      - name: Build executable for Linux
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: pyinstaller --onefile --name offloadhelper_linux main.py
-
-      - name: Build executable for macOS
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          pyinstaller --onefile --target-arch x86_64 --name offloadhelper_macos_x86 main.py
-          pyinstaller --onefile --target-arch arm64  --name offloadhelper_macos_arm main.py
-          lipo -create dist/offloadhelper_macos_x86 dist/offloadhelper_macos_arm -output dist/offloadhelper_macos
-
-      - name: Upload artifacts
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: offloadhelper-${{ matrix.os }}
-          path: dist/
-```
+          name: offloadhelper-windows
+          path: dist/OffloadHelper.exe
