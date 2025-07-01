@@ -1,35 +1,24 @@
-# .github/workflows/build-linux.yml
+#!/usr/bin/env bash
+set -euo pipefail
 
-name: Build Linux Release
+# ثبّت الاعتماديات
+python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install pyinstaller==5.13.0
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+# نظّف مجلد dist
+rm -rf dist
 
-jobs:
-  build_linux:
-    name: Build Linux Binary
-    runs-on: ubuntu-latest
+# ابنِ البايناري مع hidden imports
+pyinstaller --onefile \
+  --name offloadhelper_linux \
+  --hidden-import=ipaddress \
+  --hidden-import=urllib.parse \
+  --hidden-import=pyimod02_importers \
+  --hidden-import=pathlib \
+  main.py
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Make build script executable
-        run: chmod +x scripts/build-linux.sh
-
-      - name: Run build script
-        run: scripts/build-linux.sh
-
-      - name: Upload Linux binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: offloadhelper-linux
-          path: dist/offloadhelper_linux
+# تحقق من وجود الملف الناتج
+if [ ! -f dist/offloadhelper_linux ]; then
+  echo "❌ dist/offloadhelper_linux not found" >&2
+  exit 1
+fi
