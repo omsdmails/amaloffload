@@ -1,9 +1,5 @@
 # .github/workflows/build-windows.yml
 
-##
-## Workflow: Build & Release Binaries for Windows, Linux & macOS
-##
-
 name: Build & Release Binaries
 
 on:
@@ -25,6 +21,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python (3.10)
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
       - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
@@ -36,21 +37,21 @@ jobs:
       - name: Install dependencies
         run: |
           echo "requirements.txt exists? $( [ -f requirements.txt ] && echo yes || echo no )"
-          python3 -m pip install --upgrade pip==23.2.1 wheel setuptools || { echo "❌ Failed upgrading pip"; exit 1; }
+          pip install --upgrade pip==23.2.1 wheel setuptools
           if [ -f requirements.txt ]; then
-            python3 -m pip install --retries 3 --timeout 30 -r requirements.txt || { echo "❌ Dependency install failed"; exit 1; }
+            pip install --retries 3 --timeout 30 -r requirements.txt
           else
-            python3 -m pip install --retries 3 --timeout 30 -e . || { echo "❌ Editable install failed"; exit 1; }
+            pip install --retries 3 --timeout 30 -e .
           fi
-          python3 -m pip install pyinstaller==5.13.0 || { echo "❌ PyInstaller install failed"; exit 1; }
+          pip install pyinstaller==5.13.0
 
       - name: Run Linter
         run: |
-          python3 -m pip install flake8==6.0.0
-          python3 -m flake8 . --exit-zero
+          pip install flake8==6.0.0
+          flake8 . --exit-zero
 
       - name: Run Tests
-        run: python3 -m unittest discover tests
+        run: python -m unittest discover tests
 
       - name: Verify dist folder
         run: |
@@ -64,14 +65,14 @@ jobs:
         run: |
           case "${{ matrix.os }}" in
             windows-latest)
-              python3 -m PyInstaller --onefile --name OffloadHelper main.py
+              pyinstaller --onefile --name OffloadHelper main.py
               ;;
             ubuntu-latest)
-              python3 -m PyInstaller --onefile --name offloadhelper_linux main.py
+              pyinstaller --onefile --name offloadhelper_linux main.py
               ;;
             macos-latest)
-              python3 -m PyInstaller --onefile --target-arch x86_64 --name offloadhelper_macos_x86 main.py
-              python3 -m PyInstaller --onefile --target-arch arm64  --name offloadhelper_macos_arm main.py
+              pyinstaller --onefile --target-arch x86_64 --name offloadhelper_macos_x86 main.py
+              pyinstaller --onefile --target-arch arm64  --name offloadhelper_macos_arm main.py
               lipo -create dist/offloadhelper_macos_x86 dist/offloadhelper_macos_arm -output dist/offloadhelper_macos
               ;;
           esac
