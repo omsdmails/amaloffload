@@ -3,18 +3,6 @@
 ##
 ## Workflow: Build & Release Binaries for Windows, Linux & macOS
 ##
-## - Cleans old artifacts
-## - Checks out code
-## - Caches pip dependencies (per OS + Python version)
-## - Sets up Python
-## - Installs dependencies with retry + logs requirement usage
-## - Runs linter
-## - Runs tests
-## - Verifies build outputs
-## - Builds executables per platform (including macOS universal)
-## - Uploads artifacts
-## - Creates a GitHub Release with those artifacts
-##
 
 name: Build & Release Binaries
 
@@ -29,7 +17,6 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.7, 3.8, 3.9, 3.10, 3.11]
 
     steps:
       - name: Clean dist folder
@@ -42,14 +29,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
@@ -65,7 +47,7 @@ jobs:
       - name: Run Linter
         run: |
           pip install flake8==6.0.0
-          flake8 . --exit-zero  # continue even if style issues exist
+          flake8 . --exit-zero
 
       - name: Run Tests
         run: python -m unittest discover tests
@@ -98,7 +80,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: offloadhelper-${{ matrix.os }}-py${{ matrix.python-version }}-${{ github.run_number }}
+          name: offloadhelper-${{ matrix.os }}-${{ github.run_number }}
           path: |
             dist/OffloadHelper.exe
             dist/offloadhelper_linux
@@ -114,16 +96,16 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: offloadhelper-${{ matrix.os }}-py${{ matrix.python-version }}-${{ github.run_number }}
+          name: offloadhelper-${{ matrix.os }}-${{ github.run_number }}
           path: release_assets
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: v${{ github.run_number }}
-          name: Release ${{ github.run_number }} on ${{ matrix.os }}
+          name: Release ${{ github.run_number }}
           body: |
-            Automated build and release for OS: ${{ matrix.os }}, Python: ${{ matrix.python-version }}.
+            Automated build for OS: ${{ matrix.os }}.
           files: release_assets/**
 
   notify:
