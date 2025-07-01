@@ -11,6 +11,8 @@ jobs:
 build\_linux:
 runs-on: ubuntu-latest
 name: Build Linux Binary & AppImage
+env:
+APP\_DIR: AppDir
 
 ```
 steps:
@@ -22,29 +24,52 @@ steps:
     with:
       python-version: '3.10'
 
+  - name: Cache pip dependencies
+    uses: actions/cache@v3
+    with:
+      path: ~/.cache/pip
+      key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+      restore-keys: |
+        ${{ runner.os }}-pip-
+
   - name: Install Python dependencies
     run: |
-      python3 -m pip install --upgrade pip setuptools wheel
-      pip install pyinstaller==5.13.0
+      python3 -m pip install --upgrade pip==23.2.1 wheel setuptools || exit 1
+      pip install pyinstaller==5.13.0 || exit 1
+
+  - name: Security scan dependencies
+    run: |
+      pip install safety
+      safety check || echo "⚠️ Vulnerabilities found"
+
+  # Clean previous build
+  - name: Clean dist folder
+    run: rm -rf dist
 
   - name: Build standalone binary
     run: |
       pyinstaller --onefile --name offloadhelper_linux main.py
 
-  - name: Download linuxdeploy AppImage
+  - name: Verify binary
+    run: |
+      if [ ! -f dist/offloadhelper_linux ]; then echo "❌ Binary missing!" && exit 1; fi
+      file dist/offloadhelper_linux
+
+  - name: Download linuxdeploy AppImage tool
     run: |
       wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
       chmod +x linuxdeploy-x86_64.AppImage
 
-  - name: Prepare AppDir
+  - name: Prepare AppDir structure
     run: |
-      mkdir -p AppDir/usr/bin
-      cp dist/offloadhelper_linux AppDir/usr/bin/offloadhelper
+      mkdir -p $APP_DIR/usr/bin
+      mkdir -p $APP_DIR/usr/share/applications
+      mkdir -p $APP_DIR/usr/share/icons/hicolor/256x256/apps
+      cp dist/offloadhelper_linux $APP_DIR/usr/bin/offloadhelper
 
-  - name: Create desktop file
+  - name: Create desktop entry
     run: |
-      mkdir -p AppDir/usr/share/applications
-      cat > AppDir/usr/share/applications/offloadhelper.desktop << 'EOF'
+      cat > $APP_DIR/usr/share/applications/offloadhelper.desktop << 'EOF'
 ```
 
 \[Desktop Entry]
@@ -56,22 +81,21 @@ Categories=Utility;
 EOF
 
 ```
-  - name: Add icon placeholder
+  - name: Add icon (or placeholder)
     run: |
-      mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
       if [ -f resources/offloadhelper.png ]; then
-        cp resources/offloadhelper.png AppDir/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+        cp resources/offloadhelper.png $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
       else
-        # Create a blank placeholder using ImageMagick
-        convert -size 256x256 xc:gray AppDir/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
+        sudo apt-get update && sudo apt-get install -y imagemagick
+        convert -size 256x256 xc:gray $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png
       fi
 
   - name: Bundle into AppImage
     run: |
-      ./linuxdeploy-x86_64.AppImage --appdir AppDir \
-        --desktop-file AppDir/usr/share/applications/offloadhelper.desktop \
-        --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/offloadhelper.png \
-        --output appimage
+      ./linuxdeploy-x86_64.AppImage --appdir $APP_DIR \
+        --desktop-file $APP_DIR/usr/share/applications/offloadhelper.desktop \
+        --icon-file $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png \
+        --output appimage || exit 1
 
   - name: Upload raw binary
     uses: actions/upload-artifact@v4
@@ -84,4 +108,8 @@ EOF
     with:
       name: offloadhelper-linux-AppImage
       path: '*.AppImage'
+
+  - name: Notify on failure
+    if: failure()
+    run: echo "❌ Linux build failed!"
 ```
