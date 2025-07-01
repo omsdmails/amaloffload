@@ -34,20 +34,14 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python3 -m pip install --upgrade pip==23.2.1 wheel setuptools || exit 1
-          pip install pyinstaller==5.13.0 || exit 1
-
-      - name: Security scan dependencies
-        run: |
-          pip install safety
-          safety check || echo "⚠️ Vulnerabilities found"
+          python3 -m pip install --upgrade pip==23.2.1 setuptools wheel || exit 1
+          python3 -m pip install pyinstaller==5.13.0 || exit 1
 
       - name: Clean dist folder
         run: rm -rf dist
 
       - name: Build standalone binary
-        run: |
-          pyinstaller --onefile --name offloadhelper_linux main.py
+        run: pyinstaller --onefile --name offloadhelper_linux main.py
 
       - name: Verify binary
         run: |
@@ -93,16 +87,18 @@ EOF
           ./linuxdeploy-x86_64.AppImage --appdir $APP_DIR \
             --desktop-file $APP_DIR/usr/share/applications/offloadhelper.desktop \
             --icon-file $APP_DIR/usr/share/icons/hicolor/256x256/apps/offloadhelper.png \
-            --output appimage || exit 1
+            --output appimage
 
       - name: Upload raw binary
         uses: actions/upload-artifact@v4
         with:
           name: offloadhelper-linux-binary
-          path: dist/offloadhelper_linux
+          path:
+            - dist/offloadhelper_linux
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
           name: offloadhelper-linux-AppImage
-          path: '*.AppImage'
+          path:
+            - '*.AppImage'
