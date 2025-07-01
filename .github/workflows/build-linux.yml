@@ -23,10 +23,23 @@ jobs:
           python-version: '3.10'
 
       - name: Install PyInstaller
-        run: pip install pyinstaller==5.13.0
+        run: |
+          python3 -m pip install --upgrade pip==23.2.1 setuptools wheel
+          python3 -m pip install pyinstaller==5.13.0
 
       - name: Build standalone binary
-        run: pyinstaller --onefile --name offloadhelper_linux main.py
+        run: |
+          pyinstaller --onefile \
+            --name offloadhelper_linux \
+            --hidden-import=ipaddress \
+            --hidden-import=urllib.parse \
+            main.py
+
+      - name: Verify binary exists
+        run: |
+          if [ ! -f dist/offloadhelper_linux ]; then
+            echo "❌ dist/offloadhelper_linux not found" && exit 1
+          fi
 
       - name: Upload Linux binary
         uses: actions/upload-artifact@v4
